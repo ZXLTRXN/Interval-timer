@@ -45,7 +45,7 @@ class TimerService : Service(), CoroutineScope {
             when (getSerializable(SERVICE_COMMAND) as TimerState) {
                 TimerState.START -> startTimer()
                 TimerState.PAUSE -> pauseTimer()
-                TimerState.STOP -> endTimer()
+                TimerState.STOP -> stopTimer()
                 else -> return START_NOT_STICKY
             }
         }
@@ -72,7 +72,7 @@ class TimerService : Service(), CoroutineScope {
         broadcastUpdate()
     }
 
-    private fun endTimer() {
+    private fun stopTimer() {
         serviceState = TimerState.STOP
         handler.removeCallbacks(runnable)
         job.cancel()
