@@ -15,10 +15,14 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ServiceComponent
+import kotlinx.coroutines.Job
 
 @Module
 @InstallIn(ServiceComponent::class)
 class ServiceModule {
+    @Provides
+    fun provideJob(): Job = Job()
+
     @Provides
     fun getNotificationManager(@ServiceContext context: Context): NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

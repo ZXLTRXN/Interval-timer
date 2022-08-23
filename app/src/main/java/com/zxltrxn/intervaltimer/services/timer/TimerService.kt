@@ -18,13 +18,14 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class TimerService : Service(), CoroutineScope {
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
-    private val job = Job()
 
-    private var serviceState: TimerState = TimerState.INITIALIZED
+    @Inject
+    lateinit var job: Job
 
-    //    private val helper by lazy { NotificationHelper(this) }
     @Inject
     lateinit var helper: NotificationHelper
+
+    private var serviceState: TimerState = TimerState.INITIALIZED
 
     private var currentTime: Int = 0
     private var startedAtTimestamp: Int = 0
