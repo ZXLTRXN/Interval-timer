@@ -8,5 +8,11 @@ fun Int.secondsToTime(context: Context): String {
     val tmp: Int = this % 3600
     val minutes: Int = tmp / 60
     val seconds: Int = tmp % 60
-    return context.getString(R.string.time_representation, hours, minutes, seconds)
+    val padTo2: (Int) -> String = { it.toString().padStart(2, '0') }
+    return context.getString(
+        R.string.time_representation,
+        padTo2(hours),
+        padTo2(minutes),
+        padTo2(seconds)
+    )
 }
