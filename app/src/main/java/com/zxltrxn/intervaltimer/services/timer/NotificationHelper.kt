@@ -4,41 +4,27 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import com.zxltrxn.intervaltimer.MainActivity
-import com.zxltrxn.intervaltimer.R
+import javax.inject.Inject
 
-class NotificationHelper(private val context: Context) {
-    private val notificationManager by lazy {
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
 
-    private val notificationBuilder: NotificationCompat.Builder by lazy {
-        NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.app_name))
-            .setSound(null)
-            .setContentIntent(contentIntent)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-    }
+class NotificationHelper @Inject constructor() {
+    @Inject
+    lateinit var notificationManager: NotificationManager
 
-    private val contentIntent: PendingIntent by lazy {
-        PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
-    }
+    @Inject
+    lateinit var notificationBuilder: NotificationCompat.Builder
+
+    @Inject
+    lateinit var contentIntent: PendingIntent
+
+    @Inject
+    lateinit var channel: NotificationChannel
 
     fun getNotification(): Notification {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager.createNotificationChannel(createChannel())
+            notificationManager.createNotificationChannel(channel)
         }
         return notificationBuilder.build()
     }
@@ -48,21 +34,10 @@ class NotificationHelper(private val context: Context) {
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createChannel() =
-        NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = CHANNEL_DESCRIPTION
-            setSound(null, null)
-        }
-
     companion object {
         const val NOTIFICATION_ID = 99
-        private const val CHANNEL_ID = "IntervalTimerChannel"
-        private const val CHANNEL_NAME = "IntervalTimerChannelName"
-        private const val CHANNEL_DESCRIPTION = "IntervalTimerChannelDescription"
+        const val CHANNEL_ID = "IntervalTimerChannel"
+        const val CHANNEL_NAME = "IntervalTimerChannelName"
+        const val CHANNEL_DESCRIPTION = "IntervalTimerChannelDescription"
     }
 }

@@ -7,19 +7,24 @@ import android.os.IBinder
 import android.os.Looper
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.utils.secondsToTime
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class TimerService : Service(), CoroutineScope {
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
     private val job = Job()
 
     private var serviceState: TimerState = TimerState.INITIALIZED
 
-    private val helper by lazy { NotificationHelper(this) }
+    //    private val helper by lazy { NotificationHelper(this) }
+    @Inject
+    lateinit var helper: NotificationHelper
 
     private var currentTime: Int = 0
     private var startedAtTimestamp: Int = 0
