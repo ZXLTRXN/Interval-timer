@@ -14,10 +14,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class TimerService : Service(), CoroutineScope {
-    var serviceState: TimerState = TimerState.INITIALIZED
-
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
     private val job = Job()
+
+    private var serviceState: TimerState = TimerState.INITIALIZED
 
     private val helper by lazy { NotificationHelper(this) }
 
@@ -37,9 +37,7 @@ class TimerService : Service(), CoroutineScope {
         }
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -84,17 +82,15 @@ class TimerService : Service(), CoroutineScope {
 
     private fun broadcastUpdate() {
         if (serviceState == TimerState.START) {
-            val elapsedTime = (currentTime - startedAtTimestamp)
+            val elapsedTime: Int = (currentTime - startedAtTimestamp)
             sendBroadcast(
                 Intent(TIMER_ACTION)
-                    .putExtra(NOTIFICATION_TEXT, elapsedTime)
+                    .putExtra(REMAINING_TIME, elapsedTime)
             )
             helper.updateNotification(
                 getString(
                     R.string.time_is_running,
-                    elapsedTime.secondsToTime(
-                        getString(R.string.time_representation)
-                    )
+                    elapsedTime.secondsToTime(this)
                 )
             )
         } else if (serviceState == TimerState.PAUSE) {
@@ -115,8 +111,8 @@ class TimerService : Service(), CoroutineScope {
 
     companion object {
         const val SERVICE_COMMAND = "TimerCommand"
-        private const val TIMER_ACTION = "TimerAction"
-        private const val NOTIFICATION_TEXT = "NotificationText"
+        const val TIMER_ACTION = "TimerAction"
+        const val REMAINING_TIME = "RemainingTime"
         private const val DELAY: Long = 1000
     }
 }
