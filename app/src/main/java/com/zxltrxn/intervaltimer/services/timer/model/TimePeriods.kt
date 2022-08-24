@@ -23,7 +23,7 @@ data class TimePeriods(
         }
 
     fun next(): Period? {
-        if (cycles == passedCycles) {
+        if ( passedCycles >= cycles) {
             currentPeriod = null
             return currentPeriod
         }
