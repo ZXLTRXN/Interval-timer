@@ -14,7 +14,8 @@ import com.zxltrxn.intervaltimer.services.timer.TimerService.Companion.REMAINING
 import com.zxltrxn.intervaltimer.services.timer.TimerService.Companion.TIMER_ACTION
 import com.zxltrxn.intervaltimer.services.timer.TimerServiceCommander
 import com.zxltrxn.intervaltimer.services.timer.TimerServiceCommanderImpl
-import com.zxltrxn.intervaltimer.services.timer.TimerState
+import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
+import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 
 class TimerFragment : Fragment(R.layout.timer_fragment),
@@ -55,12 +56,13 @@ class TimerFragment : Fragment(R.layout.timer_fragment),
 
     private fun bind() {
         val def: Int = 0
+        val periods = TimePeriods(5,10,4,3)
         binding.remainingTime.text = def.secondsToTime(requireContext())
         binding.buttonOn.setOnClickListener {
-            sendCommandToService(requireActivity(), TimerState.START)
+            sendCommandToService(requireActivity(), TimerCommand.Start(periods))
         }
         binding.buttonOff.setOnClickListener {
-            sendCommandToService(requireActivity(), TimerState.STOP)
+            sendCommandToService(requireActivity(), TimerCommand.Stop)
         }
     }
 }
