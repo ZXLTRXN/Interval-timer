@@ -22,24 +22,25 @@ data class TimePeriods(
             field = value
         }
 
-    fun next(): Period {
-        if (cycles == passedCycles) currentPeriod = Period.Finish
+    fun next(): Period? {
+        if (cycles == passedCycles) {
+            currentPeriod = null
+            return currentPeriod
+        }
         currentPeriod = when (currentPeriod) {
             null -> Period.Preparation(prepTime)
             is Period.Preparation -> Period.Work(workTime)
             is Period.Work -> Period.Rest(restTime)
             is Period.Rest -> Period.Work(workTime)
-            is Period.Finish -> return currentPeriod!!
         }
-        return currentPeriod!!
+        return currentPeriod
     }
 }
 
-sealed interface Period {
-    data class Preparation(val time: Int) : Period
-    data class Work(val time: Int) : Period
-    data class Rest(val time: Int) : Period
-    object Finish : Period
+sealed class Period(val time: Int) {
+    data class Preparation(val t: Int) : Period(t)
+    data class Work(val t: Int) : Period(t)
+    data class Rest(val t: Int) : Period(t)
 }
 
 

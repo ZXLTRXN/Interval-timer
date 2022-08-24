@@ -11,5 +11,8 @@ sealed interface TimerCommand : Parcelable {
     object Pause : TimerCommand
 
     @Parcelize
+    object Continue : TimerCommand
+
+    @Parcelize
     object Stop : TimerCommand
 }
