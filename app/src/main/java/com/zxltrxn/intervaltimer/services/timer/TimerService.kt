@@ -28,10 +28,9 @@ class TimerService : Service() {
     @Inject
     lateinit var timer: RxTimer
 
-    private var serviceState: TimerState = TimerState.Initialized
+    private lateinit var serviceState: TimerState
+    private lateinit var periods: TimePeriods
     private var remainingTime: Int = 0
-    private var periods: TimePeriods? = null
-    private var currentPeriod: Period? = null
 
     override fun onBind(p0: Intent?): IBinder? = null
 
@@ -42,7 +41,7 @@ class TimerService : Service() {
                 is TimerCommand.Start -> startTimer(command.periods)
                 is TimerCommand.Pause -> pauseTimer()
                 is TimerCommand.Continue -> continueTimer()
-                is TimerCommand.Stop -> stopTimer()
+                is TimerCommand.Stop -> stopService(true)
             }
         }
         return START_NOT_STICKY
@@ -55,9 +54,8 @@ class TimerService : Service() {
 
     private fun startTimer(periods: TimePeriods) {
         val firstPeriod: Period = periods.next() ?: return
-        serviceState = TimerState.Started
+        serviceState = TimerState.Started(firstPeriod)
         this.periods = periods
-        currentPeriod = firstPeriod
         remainingTime = firstPeriod.time
         startForeground(NotificationHelper.NOTIFICATION_ID, helper.getNotification())
         broadcastUpdate()
@@ -69,13 +67,15 @@ class TimerService : Service() {
     }
 
     private fun pauseTimer() {
-        serviceState = TimerState.Paused
+        if (serviceState !is TimerState.Started) return
+        serviceState = TimerState.Paused(serviceState.period)
         timer.stop()
         broadcastUpdate()
     }
 
     private fun continueTimer() {
-        serviceState = TimerState.Started
+        if (serviceState !is TimerState.Paused) return
+        serviceState = TimerState.Started(serviceState.period)
         timer.start(
             timeInSeconds = remainingTime.toLong(),
             onTick = this::onTick,
@@ -83,19 +83,12 @@ class TimerService : Service() {
         )
     }
 
-    private fun stopTimer(removeNotification: Boolean = true) {
-        serviceState = TimerState.Stopped
-        timer.stop()
-        broadcastUpdate()
-        stopService(removeNotification)
-    }
-
     private fun updatePeriod() {
-        serviceState = TimerState.PeriodEnded(currentPeriod!!)
+        serviceState = TimerState.PeriodEnded(serviceState.period)
         broadcastUpdate()
-        val nextPeriod: Period? = periods?.next()
+        val nextPeriod: Period? = periods.next()
         if (nextPeriod != null) {
-            currentPeriod = nextPeriod
+            serviceState = TimerState.Started(nextPeriod)
             remainingTime = nextPeriod.time
             timer.start(
                 timeInSeconds = remainingTime.toLong(),
@@ -104,7 +97,7 @@ class TimerService : Service() {
                 onComplete = this::updatePeriod
             )
         } else {
-            stopTimer(false)
+            stopService(false)
         }
     }
 
@@ -117,19 +110,13 @@ class TimerService : Service() {
         val string = when (val state = serviceState) {
             is TimerState.Started -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                getString(R.string.time_is_running, remainingTime.secondsToTime(this))
-            }
-            is TimerState.PeriodEnded -> {
                 getString(
-                    when (state.period) {
-                        is Period.Work -> R.string.work_period_ended
-                        is Period.Rest -> R.string.rest_period_ended
-                        is Period.Preparation -> R.string.preparation_period_ended
-                    }
+                    state.period.getPeriodResource().running,
+                    remainingTime.secondsToTime(this)
                 )
             }
+            is TimerState.PeriodEnded -> getString(state.period.getPeriodResource().ended)
             is TimerState.Paused -> getString(R.string.get_back)
-            else -> return
         }
         helper.updateNotification(string)
     }

@@ -1,10 +1,15 @@
 <resources>
     <string name="app_name">Interval Timer</string>
-    <string name="time_is_running">Time\'s running! %1$s</string>
+
     <string name="time_representation">%1$s:%2$s:%3$s</string>
+    <string name="preparation_is_running">Preparation\'s running! %1$s</string>
+    <string name="work_is_running">Work\'s running! %1$s</string>
+    <string name="rest_is_running">Rest\'s running! %1$s</string>
+
     <string name="get_back">Hey you! Get back! :]</string>
-    <string name="preparation_period_ended">preparation_period_ended</string>
-    <string name="work_period_ended">work_period_ended</string>
-    <string name="rest_period_ended">rest_period_ended</string>
-    <string name="time_is_over">time is over</string>
+
+    <string name="preparation_period_ended">Preparation ended</string>
+    <string name="work_period_ended">Work ended</string>
+    <string name="rest_period_ended">Rest ended</string>
+    <string name="time_is_over">Time is over</string>
 </resources>

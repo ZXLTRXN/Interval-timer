@@ -1,9 +1,7 @@
 package com.zxltrxn.intervaltimer.services.timer.model
 
-sealed interface TimerState {
-    object Initialized : TimerState
-    object Started : TimerState
-    object Paused : TimerState
-    data class PeriodEnded(val period: Period): TimerState
-    object Stopped : TimerState
+sealed class TimerState(open val period: Period) {
+    data class Started(override val period: Period) : TimerState(period)
+    data class Paused(override val period: Period) : TimerState(period)
+    data class PeriodEnded(override val period: Period) : TimerState(period)
 }

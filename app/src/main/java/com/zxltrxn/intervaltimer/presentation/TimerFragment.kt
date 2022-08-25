@@ -56,7 +56,7 @@ class TimerFragment : Fragment(R.layout.timer_fragment),
 
     private fun bind() {
         val def: Int = 0
-        val periods = TimePeriods(5,10,4,3)
+        val periods = TimePeriods(3, 3, 3, 1)
         binding.remainingTime.text = def.secondsToTime(requireContext())
         binding.buttonOn.setOnClickListener {
             sendCommandToService(requireActivity(), TimerCommand.Start(periods))
