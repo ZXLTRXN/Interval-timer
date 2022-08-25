@@ -21,15 +21,13 @@ class RxTimer @Inject constructor() {
         timer = Observable.create {
             it.onNext(Unit)
             it.onComplete()
-        }
-            .subscribeOn(Schedulers.io())
+        }.subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
             .delay(withDelay, TimeUnit.MILLISECONDS)
             .doOnNext { afterDelay() }
             .flatMap {
                 Observable.interval(TICK, TimeUnit.MILLISECONDS)
                     .take(timeInSeconds)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
                     .doOnNext { onTick() }
                     .doOnComplete { onComplete() }
             }.subscribe()

@@ -14,7 +14,6 @@ import io.reactivex.rxjava3.core.Single
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-
 @AndroidEntryPoint
 class TimerService : Service() {
     @Inject
@@ -43,8 +42,8 @@ class TimerService : Service() {
     }
 
     override fun onDestroy() {
+        if (this::serviceState.isInitialized) timer.stop()
         super.onDestroy()
-        timer.stop()
     }
 
     private fun startTimer(periods: TimePeriods) {
@@ -56,7 +55,6 @@ class TimerService : Service() {
         broadcastUpdate()
         timer.start(
             timeInSeconds = remainingTime.toLong(),
-            withDelay = FIRST_DELAY,
             onTick = this::onTick,
             onComplete = this::updatePeriod
         )
@@ -77,6 +75,12 @@ class TimerService : Service() {
             onTick = this::onTick,
             onComplete = this::updatePeriod
         )
+    }
+
+    private fun stopService() {
+        if (!this::serviceState.isInitialized) return
+        stopForeground(true)
+        stopSelf()
     }
 
     private fun updatePeriod() {
@@ -121,19 +125,12 @@ class TimerService : Service() {
         helper.updateNotification(string)
     }
 
-    private fun stopService() {
-        if (!this::serviceState.isInitialized) return
-        stopForeground(true)
-        stopSelf()
-
-    }
-
     companion object {
         const val SERVICE_COMMAND = "TimerCommand"
         const val TIMER_ACTION = "TimerAction"
         const val REMAINING_TIME = "RemainingTime"
-        private const val AFTER_PERIOD_DELAY =
-            2000L // for the user to see 00:00 (time ended) and sound
-        private const val FIRST_DELAY = 700L // for the user to see the starting number
+
+        // for the user to see 00:00 (time ended) and sound
+        private const val AFTER_PERIOD_DELAY = 2000L
     }
 }
