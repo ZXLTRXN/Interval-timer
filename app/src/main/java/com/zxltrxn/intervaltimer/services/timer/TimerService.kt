@@ -2,9 +2,8 @@ package com.zxltrxn.intervaltimer.services.timer
 
 import android.app.Service
 import android.content.Intent
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
+import android.service.media.MediaBrowserService
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.services.timer.model.Period
 import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
@@ -12,42 +11,27 @@ import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.services.timer.model.TimerState
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 import dagger.hilt.android.AndroidEntryPoint
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
 
 @AndroidEntryPoint
-class TimerService : Service(), CoroutineScope {
-    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
-
-    @Inject
-    lateinit var job: Job
-
+class TimerService : Service() {
     @Inject
     lateinit var helper: NotificationHelper
 
+    @Inject
+    lateinit var timer: RxTimer
+
     private var serviceState: TimerState = TimerState.Initialized
-
-    private var remainingTime: Int = -1
-        set(value) {
-            field = value
-            if (value == 0) updatePeriod()
-        }
+    private var remainingTime: Int = 0
     private var periods: TimePeriods? = null
-    private lateinit var currentPeriod: Period
-
-    private val handler = Handler(Looper.getMainLooper())
-    private var runnable: Runnable = object : Runnable {
-        override fun run() {
-            remainingTime--
-            broadcastUpdate()
-            handler.postDelayed(this, DELAY)
-        }
-    }
+    private var currentPeriod: Period? = null
 
     override fun onBind(p0: Intent?): IBinder? = null
 
@@ -66,8 +50,7 @@ class TimerService : Service(), CoroutineScope {
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacks(runnable)
-        job.cancel()
+        timer.stop()
     }
 
     private fun startTimer(periods: TimePeriods) {
@@ -75,44 +58,59 @@ class TimerService : Service(), CoroutineScope {
         serviceState = TimerState.Started
         this.periods = periods
         currentPeriod = firstPeriod
-        remainingTime = currentPeriod.time
+        remainingTime = firstPeriod.time
         startForeground(NotificationHelper.NOTIFICATION_ID, helper.getNotification())
         broadcastUpdate()
-        startCoroutineTimer()
-    }
-
-    private fun updatePeriod() {
-        handler.removeCallbacks(runnable)
-        serviceState = TimerState.PeriodEnded(currentPeriod)
-        broadcastUpdate()
-        val nextPeriod: Period? = periods?.next()
-        if (nextPeriod != null) {
-            currentPeriod = nextPeriod
-            remainingTime = nextPeriod.time
-            continueTimer()
-        } else {
-            stopTimer(false)
-        }
+        timer.start(
+            timeInSeconds = remainingTime.toLong(),
+            onTick = this::onTick,
+            onComplete = this::updatePeriod
+        )
     }
 
     private fun pauseTimer() {
         serviceState = TimerState.Paused
-        handler.removeCallbacks(runnable)
+        timer.stop()
         broadcastUpdate()
     }
 
     private fun continueTimer() {
         serviceState = TimerState.Started
-        broadcastUpdate()
-        startCoroutineTimer()
+        timer.start(
+            timeInSeconds = remainingTime.toLong(),
+            onTick = this::onTick,
+            onComplete = this::updatePeriod
+        )
     }
 
     private fun stopTimer(removeNotification: Boolean = true) {
         serviceState = TimerState.Stopped
-        handler.removeCallbacks(runnable)
-        job.cancel()
+        timer.stop()
         broadcastUpdate()
         stopService(removeNotification)
+    }
+
+    private fun updatePeriod() {
+        serviceState = TimerState.PeriodEnded(currentPeriod!!)
+        broadcastUpdate()
+        val nextPeriod: Period? = periods?.next()
+        if (nextPeriod != null) {
+            currentPeriod = nextPeriod
+            remainingTime = nextPeriod.time
+            timer.start(
+                timeInSeconds = remainingTime.toLong(),
+                withDelay = POST_PERIOD_DELAY,
+                onTick = this::onTick,
+                onComplete = this::updatePeriod
+            )
+        } else {
+            stopTimer(false)
+        }
+    }
+
+    private fun onTick(value: Long) {
+        remainingTime--
+        broadcastUpdate()
     }
 
     private fun broadcastUpdate() {
@@ -122,12 +120,13 @@ class TimerService : Service(), CoroutineScope {
                 getString(R.string.time_is_running, remainingTime.secondsToTime(this))
             }
             is TimerState.PeriodEnded -> {
-                val stringRes: Int = when (state.period) {
-                    is Period.Work -> R.string.work_period_ended
-                    is Period.Rest -> R.string.rest_period_ended
-                    is Period.Preparation -> R.string.preparation_period_ended
-                }
-                getString(stringRes)
+                getString(
+                    when (state.period) {
+                        is Period.Work -> R.string.work_period_ended
+                        is Period.Rest -> R.string.rest_period_ended
+                        is Period.Preparation -> R.string.preparation_period_ended
+                    }
+                )
             }
             is TimerState.Paused -> getString(R.string.get_back)
             else -> return
@@ -140,17 +139,10 @@ class TimerService : Service(), CoroutineScope {
         stopSelf()
     }
 
-    private fun startCoroutineTimer() {
-        launch(coroutineContext) {
-            handler.post(runnable)
-        }
-    }
-
     companion object {
         const val SERVICE_COMMAND = "TimerCommand"
         const val TIMER_ACTION = "TimerAction"
         const val REMAINING_TIME = "RemainingTime"
-        private const val DELAY: Long = 1000
-        private const val POST_PERIOD_DELAY: Long = 3000
+        private const val POST_PERIOD_DELAY = 2500L
     }
 }
