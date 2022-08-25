@@ -13,18 +13,26 @@ class RxTimer @Inject constructor() {
     fun start(
         timeInSeconds: Long,
         withDelay: Long = 0L,
-        onTick: (Long) -> Unit,
-        onComplete: () -> Unit
+        onTick: () -> Unit,
+        onComplete: () -> Unit,
+        afterDelay: () -> Unit = { }
     ) {
         if (this::timer.isInitialized) stop()
-        timer = Observable
-            .interval(withDelay, TICK, TimeUnit.MILLISECONDS)
-            .take(timeInSeconds)
+        timer = Observable.create {
+            it.onNext(Unit)
+            it.onComplete()
+        }
             .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnNext(onTick)
-            .doOnComplete(onComplete)
-            .subscribe()
+            .delay(withDelay, TimeUnit.MILLISECONDS)
+            .doOnNext { afterDelay() }
+            .flatMap {
+                Observable.interval(TICK, TimeUnit.MILLISECONDS)
+                    .take(timeInSeconds)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnNext { onTick() }
+                    .doOnComplete { onComplete() }
+            }.subscribe()
     }
 
     fun stop() {

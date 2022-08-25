@@ -3,7 +3,6 @@ package com.zxltrxn.intervaltimer.services.timer
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.service.media.MediaBrowserService
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.services.timer.model.Period
 import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
@@ -11,11 +10,7 @@ import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.services.timer.model.TimerState
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 import dagger.hilt.android.AndroidEntryPoint
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import io.reactivex.rxjava3.core.Single
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -41,7 +36,7 @@ class TimerService : Service() {
                 is TimerCommand.Start -> startTimer(command.periods)
                 is TimerCommand.Pause -> pauseTimer()
                 is TimerCommand.Continue -> continueTimer()
-                is TimerCommand.Stop -> stopService(true)
+                is TimerCommand.Stop -> stopService()
             }
         }
         return START_NOT_STICKY
@@ -61,20 +56,21 @@ class TimerService : Service() {
         broadcastUpdate()
         timer.start(
             timeInSeconds = remainingTime.toLong(),
+            withDelay = FIRST_DELAY,
             onTick = this::onTick,
             onComplete = this::updatePeriod
         )
     }
 
     private fun pauseTimer() {
-        if (serviceState !is TimerState.Started) return
+        if (!this::serviceState.isInitialized || serviceState !is TimerState.Started) return
         serviceState = TimerState.Paused(serviceState.period)
         timer.stop()
         broadcastUpdate()
     }
 
     private fun continueTimer() {
-        if (serviceState !is TimerState.Paused) return
+        if (!this::serviceState.isInitialized || serviceState !is TimerState.Paused) return
         serviceState = TimerState.Started(serviceState.period)
         timer.start(
             timeInSeconds = remainingTime.toLong(),
@@ -88,20 +84,24 @@ class TimerService : Service() {
         broadcastUpdate()
         val nextPeriod: Period? = periods.next()
         if (nextPeriod != null) {
-            serviceState = TimerState.Started(nextPeriod)
             remainingTime = nextPeriod.time
+            serviceState = TimerState.Started(nextPeriod)
             timer.start(
                 timeInSeconds = remainingTime.toLong(),
-                withDelay = POST_PERIOD_DELAY,
+                withDelay = AFTER_PERIOD_DELAY,
                 onTick = this::onTick,
-                onComplete = this::updatePeriod
+                onComplete = this::updatePeriod,
+                afterDelay = this::broadcastUpdate
             )
         } else {
-            stopService(false)
+//            Single.just(1)
+//                .delay(AFTER_PERIOD_DELAY, TimeUnit.MILLISECONDS)
+//                .doOnSuccess { stopService() }
+            stopService()
         }
     }
 
-    private fun onTick(value: Long) {
+    private fun onTick() {
         remainingTime--
         broadcastUpdate()
     }
@@ -110,26 +110,30 @@ class TimerService : Service() {
         val string = when (val state = serviceState) {
             is TimerState.Started -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                getString(
-                    state.period.getPeriodResource().running,
-                    remainingTime.secondsToTime(this)
-                )
+                remainingTime.secondsToTime(this)
             }
-            is TimerState.PeriodEnded -> getString(state.period.getPeriodResource().ended)
+            is TimerState.PeriodEnded -> {
+                sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
+                remainingTime.secondsToTime(this)
+            }
             is TimerState.Paused -> getString(R.string.get_back)
         }
         helper.updateNotification(string)
     }
 
-    private fun stopService(removeNotification: Boolean) {
-        stopForeground(removeNotification)
+    private fun stopService() {
+        if (!this::serviceState.isInitialized) return
+        stopForeground(true)
         stopSelf()
+
     }
 
     companion object {
         const val SERVICE_COMMAND = "TimerCommand"
         const val TIMER_ACTION = "TimerAction"
         const val REMAINING_TIME = "RemainingTime"
-        private const val POST_PERIOD_DELAY = 2500L
+        private const val AFTER_PERIOD_DELAY =
+            2000L // for the user to see 00:00 (time ended) and sound
+        private const val FIRST_DELAY = 700L // for the user to see the starting number
     }
 }
