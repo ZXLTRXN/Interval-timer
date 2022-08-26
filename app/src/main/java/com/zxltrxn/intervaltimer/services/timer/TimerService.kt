@@ -4,14 +4,14 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import com.zxltrxn.intervaltimer.R
+import com.zxltrxn.intervaltimer.WrongCommandException
 import com.zxltrxn.intervaltimer.services.timer.model.Period
 import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
 import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.services.timer.model.TimerState
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 import dagger.hilt.android.AndroidEntryPoint
-import io.reactivex.rxjava3.core.Single
-import java.util.concurrent.TimeUnit
+import java.util.Observable
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -22,7 +22,7 @@ class TimerService : Service() {
     @Inject
     lateinit var timer: RxTimer
 
-    private lateinit var serviceState: TimerState
+    private var serviceState: TimerState? = null
     private lateinit var periods: TimePeriods
     private var remainingTime: Int = 0
 
@@ -42,8 +42,8 @@ class TimerService : Service() {
     }
 
     override fun onDestroy() {
-        if (this::serviceState.isInitialized) timer.stop()
         super.onDestroy()
+        serviceState?.let { timer.stop() }
     }
 
     private fun startTimer(periods: TimePeriods) {
@@ -61,15 +61,26 @@ class TimerService : Service() {
     }
 
     private fun pauseTimer() {
-        if (!this::serviceState.isInitialized || serviceState !is TimerState.Started) return
-        serviceState = TimerState.Paused(serviceState.period)
+        val state: TimerState =
+            serviceState ?: throw WrongCommandException("Pause command unavailable before start")
+        if (state is TimerState.Paused) return
+        if (state is TimerState.PeriodEnded) {
+            periods.next()?.let { period ->
+                serviceState = TimerState.Paused(period)
+                remainingTime = period.time
+            } ?: stopService()
+        } else {
+            serviceState = TimerState.Paused(state.period)
+        }
         timer.stop()
         broadcastUpdate()
     }
 
     private fun continueTimer() {
-        if (!this::serviceState.isInitialized || serviceState !is TimerState.Paused) return
-        serviceState = TimerState.Started(serviceState.period)
+        val state: TimerState =
+            serviceState ?: throw WrongCommandException("Continue command unavailable before start")
+        if (state !is TimerState.Paused) return
+        serviceState = TimerState.Started(state.period)
         timer.start(
             timeInSeconds = remainingTime.toLong(),
             onTick = this::onTick,
@@ -78,13 +89,14 @@ class TimerService : Service() {
     }
 
     private fun stopService() {
-        if (!this::serviceState.isInitialized) return
+        if (serviceState == null) throw WrongCommandException("Stop command unavailable before start")
         stopForeground(true)
         stopSelf()
     }
 
     private fun updatePeriod() {
-        serviceState = TimerState.PeriodEnded(serviceState.period)
+        val state: TimerState = serviceState ?: return
+        serviceState = TimerState.PeriodEnded(state.period)
         broadcastUpdate()
         val nextPeriod: Period? = periods.next()
         if (nextPeriod != null) {
@@ -111,7 +123,7 @@ class TimerService : Service() {
     }
 
     private fun broadcastUpdate() {
-        val string = when (val state = serviceState) {
+        val string = when (serviceState!!) {
             is TimerState.Started -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
                 remainingTime.secondsToTime(this)
