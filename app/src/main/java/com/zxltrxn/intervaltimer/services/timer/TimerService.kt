@@ -11,7 +11,11 @@ import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.services.timer.model.TimerState
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Observable
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -43,7 +47,7 @@ class TimerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        serviceState?.let { timer.stop() }
+        timer.stop()
     }
 
     private fun startTimer(periods: TimePeriods) {
@@ -90,8 +94,14 @@ class TimerService : Service() {
 
     private fun stopService() {
         if (serviceState == null) throw WrongCommandException("Stop command unavailable before start")
-        stopForeground(true)
-        stopSelf()
+        Single.just(Unit)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .delay(AFTER_PERIOD_DELAY, TimeUnit.MILLISECONDS)
+            .doOnSuccess {
+                stopForeground(true)
+                stopSelf()
+            }.subscribe()
     }
 
     private fun updatePeriod() {
@@ -109,12 +119,7 @@ class TimerService : Service() {
                 onComplete = this::updatePeriod,
                 afterDelay = this::broadcastUpdate
             )
-        } else {
-//            Single.just(1)
-//                .delay(AFTER_PERIOD_DELAY, TimeUnit.MILLISECONDS)
-//                .doOnSuccess { stopService() }
-            stopService()
-        }
+        } else stopService()
     }
 
     private fun onTick() {

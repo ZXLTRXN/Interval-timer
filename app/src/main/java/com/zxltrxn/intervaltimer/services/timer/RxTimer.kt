@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class RxTimer @Inject constructor() {
-    private lateinit var timer: Disposable
+    private var timer: Disposable? = null
 
     fun start(
         timeInSeconds: Long,
@@ -17,11 +17,9 @@ class RxTimer @Inject constructor() {
         onComplete: () -> Unit,
         afterDelay: () -> Unit = { }
     ) {
-        if (this::timer.isInitialized) stop()
-        timer = Observable.create {
-            it.onNext(Unit)
-            it.onComplete()
-        }.subscribeOn(Schedulers.io())
+        stop()
+        timer = Observable.just(Unit)
+            .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .delay(withDelay, TimeUnit.MILLISECONDS)
             .doOnNext { afterDelay() }
@@ -34,7 +32,7 @@ class RxTimer @Inject constructor() {
     }
 
     fun stop() {
-        timer.dispose()
+        timer?.dispose()
     }
 
     private companion object {
