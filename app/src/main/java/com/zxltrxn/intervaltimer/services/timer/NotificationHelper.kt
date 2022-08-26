@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.os.Build
+import androidx.annotation.ColorInt
 import androidx.core.app.NotificationCompat
 import javax.inject.Inject
 
@@ -29,8 +30,12 @@ class NotificationHelper @Inject constructor() {
         return notificationBuilder.build()
     }
 
-    fun updateNotification(notificationText: String? = null) {
-        notificationText?.let { notificationBuilder.setContentText(it) }
+    fun updateNotification(title: String, @ColorInt color: Int, text: String? = null) {
+        with(notificationBuilder) {
+            setContentTitle(title)
+            setColor(color)
+            text?.let { this.setContentText(it) }
+        }
         notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 

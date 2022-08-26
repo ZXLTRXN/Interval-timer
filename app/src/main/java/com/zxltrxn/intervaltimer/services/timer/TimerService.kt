@@ -6,6 +6,7 @@ import android.os.IBinder
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.WrongCommandException
 import com.zxltrxn.intervaltimer.services.timer.model.Period
+import com.zxltrxn.intervaltimer.services.timer.model.PeriodResource
 import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
 import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
 import com.zxltrxn.intervaltimer.services.timer.model.TimerState
@@ -15,6 +16,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
+import java.lang.IllegalArgumentException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -72,7 +74,7 @@ class TimerService : Service() {
             periods.next()?.let { period ->
                 serviceState = TimerState.Paused(period)
                 remainingTime = period.time
-            } ?: stopService()
+            } ?: stopService(AFTER_PERIOD_DELAY)
         } else {
             serviceState = TimerState.Paused(state.period)
         }
@@ -92,12 +94,13 @@ class TimerService : Service() {
         )
     }
 
-    private fun stopService() {
+    private fun stopService(withDelay: Long = 0) {
         if (serviceState == null) throw WrongCommandException("Stop command unavailable before start")
+        timer.stop()
         Single.just(Unit)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .delay(AFTER_PERIOD_DELAY, TimeUnit.MILLISECONDS)
+            .delay(withDelay, TimeUnit.MILLISECONDS)
             .doOnSuccess {
                 stopForeground(true)
                 stopSelf()
@@ -119,7 +122,7 @@ class TimerService : Service() {
                 onComplete = this::updatePeriod,
                 afterDelay = this::broadcastUpdate
             )
-        } else stopService()
+        } else stopService(AFTER_PERIOD_DELAY)
     }
 
     private fun onTick() {
@@ -128,18 +131,26 @@ class TimerService : Service() {
     }
 
     private fun broadcastUpdate() {
-        val string = when (serviceState!!) {
+        val state: TimerState = serviceState
+            ?: throw IllegalArgumentException("Unexpected null state in broadcastUpdate")
+        val res: PeriodResource = state.period.getPeriodResource()
+        val notificationContent: Pair<Int, String> = when (state) {
             is TimerState.Started -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                remainingTime.secondsToTime(this)
+                res.runningTitle to remainingTime.secondsToTime(this)
             }
             is TimerState.PeriodEnded -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                remainingTime.secondsToTime(this)
+                res.endedTitle to remainingTime.secondsToTime(this)
             }
-            is TimerState.Paused -> getString(R.string.get_back)
+            is TimerState.Paused -> res.runningTitle to getString(R.string.get_back)
         }
-        helper.updateNotification(string)
+
+        helper.updateNotification(
+            getString(notificationContent.first),
+            res.color,
+            notificationContent.second
+        )
     }
 
     companion object {

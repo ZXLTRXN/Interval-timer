@@ -5,7 +5,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
+import androidx.annotation.ColorInt
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.zxltrxn.intervaltimer.MainActivity
@@ -33,8 +36,7 @@ class ServiceModule {
         contentIntent: PendingIntent
     ): NotificationCompat.Builder =
         NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.app_name))
-            .setSound(null)
+//            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             .setContentIntent(contentIntent)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -50,14 +52,22 @@ class ServiceModule {
         )
 
     @Provides
+    fun getAudioAttributes(): AudioAttributes =
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+
+    @Provides
     @RequiresApi(Build.VERSION_CODES.O)
-    fun createChannel(): NotificationChannel =
-        NotificationChannel(
+    fun createChannel(audioAttr: AudioAttributes): NotificationChannel {
+        return NotificationChannel(
             NotificationHelper.CHANNEL_ID,
             NotificationHelper.CHANNEL_NAME,
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = NotificationHelper.CHANNEL_DESCRIPTION
-            setSound(null, null)
+            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttr)
         }
+    }
 }

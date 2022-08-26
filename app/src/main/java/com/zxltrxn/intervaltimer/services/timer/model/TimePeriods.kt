@@ -1,8 +1,6 @@
 package com.zxltrxn.intervaltimer.services.timer.model
 
 import android.os.Parcelable
-import androidx.annotation.StringRes
-import com.zxltrxn.intervaltimer.R
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
@@ -38,35 +36,6 @@ data class TimePeriods(
         return currentPeriod
     }
 }
-
-sealed class Period(open val time: Int) {
-    data class Preparation(override val time: Int) : Period(time)
-    data class Work(override val time: Int) : Period(time)
-    data class Rest(override val time: Int) : Period(time)
-
-    fun getPeriodResource(): PeriodResource {
-        return when (this) {
-            is Work -> PeriodResource(
-                running = R.string.work_is_running,
-                ended = R.string.work_period_ended
-            )
-            is Rest -> PeriodResource(
-                running = R.string.rest_is_running,
-                ended = R.string.rest_period_ended
-            )
-            is Preparation -> PeriodResource(
-                running = R.string.preparation_is_running,
-                ended = R.string.preparation_period_ended
-            )
-        }
-    }
-}
-
-data class PeriodResource(
-    @StringRes val running: Int,
-    @StringRes val ended: Int,
-//    @ColorRes val color: Int
-)
 
 
 
