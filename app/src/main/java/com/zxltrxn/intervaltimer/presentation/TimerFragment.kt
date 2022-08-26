@@ -7,9 +7,9 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import by.kirich1409.viewbindingdelegate.viewBinding
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.databinding.TimerFragmentBinding
-import by.kirich1409.viewbindingdelegate.viewBinding
 import com.zxltrxn.intervaltimer.services.timer.TimerService.Companion.REMAINING_TIME
 import com.zxltrxn.intervaltimer.services.timer.TimerService.Companion.TIMER_ACTION
 import com.zxltrxn.intervaltimer.services.timer.TimerServiceCommander

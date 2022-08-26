@@ -13,10 +13,8 @@ import com.zxltrxn.intervaltimer.services.timer.model.TimerState
 import com.zxltrxn.intervaltimer.utils.secondsToTime
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import java.lang.IllegalArgumentException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
