@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.WrongCommandException
+import com.zxltrxn.intervaltimer.services.timer.model.NotificationData
 import com.zxltrxn.intervaltimer.services.timer.model.Period
 import com.zxltrxn.intervaltimer.services.timer.model.PeriodResource
 import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
@@ -132,23 +133,31 @@ class TimerService : Service() {
         val state: TimerState = serviceState
             ?: throw IllegalArgumentException("Unexpected null state in broadcastUpdate")
         val res: PeriodResource = state.period.getPeriodResource()
-        val notificationContent: Pair<Int, String> = when (state) {
+        val notificationData: NotificationData = when (state) {
             is TimerState.Started -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                res.runningTitle to remainingTime.secondsToTime(this)
+                NotificationData(
+                    title = getString(res.runningTitle),
+                    titleColor = res.color,
+                    message = remainingTime.secondsToTime(this)
+                )
             }
             is TimerState.PeriodEnded -> {
                 sendBroadcast(Intent(TIMER_ACTION).putExtra(REMAINING_TIME, remainingTime))
-                res.endedTitle to remainingTime.secondsToTime(this)
+                NotificationData(
+                    title = getString(res.endedTitle),
+                    titleColor = res.color,
+                    message = remainingTime.secondsToTime(this),
+//                    withSound = true
+                )
             }
-            is TimerState.Paused -> res.runningTitle to getString(R.string.get_back)
+            is TimerState.Paused -> NotificationData(
+                title = getString(res.runningTitle),
+                titleColor = res.color,
+                message = getString(R.string.get_back),
+            )
         }
-
-        helper.updateNotification(
-            getString(notificationContent.first),
-            res.color,
-            notificationContent.second
-        )
+        helper.updateNotification(notificationData)
     }
 
     companion object {

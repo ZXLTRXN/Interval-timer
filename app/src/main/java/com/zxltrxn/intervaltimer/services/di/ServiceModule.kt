@@ -12,31 +12,38 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.zxltrxn.intervaltimer.MainActivity
 import com.zxltrxn.intervaltimer.R
-import com.zxltrxn.intervaltimer.services.timer.NotificationHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ServiceComponent
-import kotlinx.coroutines.Job
 
 @Module
 @InstallIn(ServiceComponent::class)
 class ServiceModule {
     @Provides
-    fun provideJob(): Job = Job()
-
-    @Provides
     fun getNotificationManager(@ServiceContext context: Context): NotificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     @Provides
+    @MessageNotification
     fun getNotificationBuilder(
         @ServiceContext context: Context,
         contentIntent: PendingIntent
     ): NotificationCompat.Builder =
-        NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
+        NotificationCompat.Builder(context, CHANNEL_ID)
 //            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             .setContentIntent(contentIntent)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+    @Provides
+    @SoundNotification
+    fun getSoundNotificationBuilder(
+        @ServiceContext context: Context,
+    ): NotificationCompat.Builder =
+        NotificationCompat.Builder(context, SOUND_CHANNEL_ID)
+            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
@@ -59,14 +66,35 @@ class ServiceModule {
 
     @Provides
     @RequiresApi(Build.VERSION_CODES.O)
-    fun createChannel(audioAttr: AudioAttributes): NotificationChannel {
+    @MessageChannel
+    fun createNotificationChannel(): NotificationChannel {
         return NotificationChannel(
-            NotificationHelper.CHANNEL_ID,
-            NotificationHelper.CHANNEL_NAME,
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply { description = CHANNEL_DESCRIPTION }
+    }
+
+    @Provides
+    @RequiresApi(Build.VERSION_CODES.O)
+    @SoundChannel
+    fun createSoundChannel(audioAttr: AudioAttributes): NotificationChannel {
+        return NotificationChannel(
+            SOUND_CHANNEL_ID,
+            SOUND_CHANNEL_NAME,
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = NotificationHelper.CHANNEL_DESCRIPTION
+            description = SOUND_CHANNEL_DESCRIPTION
             setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttr)
         }
+    }
+
+    private companion object {
+        const val SOUND_CHANNEL_ID = "IntervalTimerSoundChannel"
+        const val SOUND_CHANNEL_NAME = "IntervalTimerSoundChannelName"
+        const val SOUND_CHANNEL_DESCRIPTION = "IntervalTimerSoundChannelDescription"
+        const val CHANNEL_ID = "IntervalTimerChannel"
+        const val CHANNEL_NAME = "IntervalTimerChannelName"
+        const val CHANNEL_DESCRIPTION = "IntervalTimerChannelDescription"
     }
 }
