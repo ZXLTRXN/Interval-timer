@@ -1,9 +1,7 @@
 package com.zxltrxn.intervaltimer.services.timer.model
 
 import androidx.annotation.ColorInt
-import androidx.annotation.StringRes
 import com.zxltrxn.intervaltimer.R
-
 
 sealed class Period(open val time: Int) {
     data class Preparation(override val time: Int) : Period(time)
@@ -33,15 +31,11 @@ sealed class Period(open val time: Int) {
     private companion object {
         @ColorInt
         const val GREEN = -0xff0100
+
         @ColorInt
         const val BLUE = -0xffff01
+
         @ColorInt
         const val CYAN = -0xff0001
     }
 }
-
-data class PeriodResource(
-    @StringRes val runningTitle: Int,
-    @StringRes val endedTitle: Int,
-    @ColorInt val color: Int,
-)
