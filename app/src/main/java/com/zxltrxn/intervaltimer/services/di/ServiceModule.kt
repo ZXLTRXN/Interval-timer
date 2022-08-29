@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -31,22 +30,49 @@ class ServiceModule {
         contentIntent: PendingIntent
     ): NotificationCompat.Builder =
         NotificationCompat.Builder(context, CHANNEL_ID)
-//            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+            .setSound(null)
             .setContentIntent(contentIntent)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
 
     @Provides
-    @SoundNotification
-    fun getSoundNotificationBuilder(
-        @ServiceContext context: Context,
-    ): NotificationCompat.Builder =
-        NotificationCompat.Builder(context, SOUND_CHANNEL_ID)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
+    @RequiresApi(Build.VERSION_CODES.O)
+    @MessageChannel
+    fun createNotificationChannel(): NotificationChannel {
+        return NotificationChannel(
+            CHANNEL_ID,
+            CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = CHANNEL_DESCRIPTION
+        }
+    }
+
+//    @Provides
+//    @SoundNotification
+//    fun getSoundNotificationBuilder(
+//        @ServiceContext context: Context,
+//    ): NotificationCompat.Builder =
+//        NotificationCompat.Builder(context, SOUND_CHANNEL_ID)
+////            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+//            .setSmallIcon(R.drawable.ic_launcher_foreground)
+//            .setPriority(NotificationCompat.PRIORITY_HIGH)
+//            .setAutoCancel(true)
+
+//    @Provides
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    @SoundChannel
+//    fun createSoundChannel(audioAttr: AudioAttributes): NotificationChannel {
+//        return NotificationChannel(
+//            SOUND_CHANNEL_ID,
+//            SOUND_CHANNEL_NAME,
+//            NotificationManager.IMPORTANCE_DEFAULT
+//        ).apply {
+//            description = SOUND_CHANNEL_DESCRIPTION
+//            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttr)
+//        }
+//    }
 
     @Provides
     fun getContentIntent(@ServiceContext context: Context): PendingIntent =
@@ -64,37 +90,12 @@ class ServiceModule {
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
-    @Provides
-    @RequiresApi(Build.VERSION_CODES.O)
-    @MessageChannel
-    fun createNotificationChannel(): NotificationChannel {
-        return NotificationChannel(
-            CHANNEL_ID,
-            CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply { description = CHANNEL_DESCRIPTION }
-    }
-
-    @Provides
-    @RequiresApi(Build.VERSION_CODES.O)
-    @SoundChannel
-    fun createSoundChannel(audioAttr: AudioAttributes): NotificationChannel {
-        return NotificationChannel(
-            SOUND_CHANNEL_ID,
-            SOUND_CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = SOUND_CHANNEL_DESCRIPTION
-            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttr)
-        }
-    }
-
     private companion object {
-        const val SOUND_CHANNEL_ID = "IntervalTimerSoundChannel"
-        const val SOUND_CHANNEL_NAME = "IntervalTimerSoundChannelName"
-        const val SOUND_CHANNEL_DESCRIPTION = "IntervalTimerSoundChannelDescription"
-        const val CHANNEL_ID = "IntervalTimerChannel"
-        const val CHANNEL_NAME = "IntervalTimerChannelName"
-        const val CHANNEL_DESCRIPTION = "IntervalTimerChannelDescription"
+        const val SOUND_CHANNEL_ID = "IntTimerSoundChannel"
+        const val SOUND_CHANNEL_NAME = "IntTimerSoundChannelName"
+        const val SOUND_CHANNEL_DESCRIPTION = "Interval timer sound channel"
+        const val CHANNEL_ID = "IntTimerChannel"
+        const val CHANNEL_NAME = "IntTimerChannelName"
+        const val CHANNEL_DESCRIPTION = "Interval timer messages channel"
     }
 }

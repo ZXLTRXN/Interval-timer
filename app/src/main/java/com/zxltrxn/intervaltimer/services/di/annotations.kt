@@ -8,16 +8,16 @@ annotation class ServiceContext
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class SoundChannel
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
 annotation class MessageChannel
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class SoundNotification
+annotation class MessageNotification
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class MessageNotification
+annotation class SoundChannel
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class SoundNotification
