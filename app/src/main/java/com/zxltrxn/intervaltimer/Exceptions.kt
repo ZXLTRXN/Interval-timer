@@ -1,7 +1,9 @@
 package com.zxltrxn.intervaltimer
 
-import java.lang.RuntimeException
-
 class WrongCommandException(
+    message: String
+) : RuntimeException(message)
+
+class WrongInputTimeException(
     message: String
 ) : RuntimeException(message)

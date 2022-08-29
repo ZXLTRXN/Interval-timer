@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.WrongCommandException
+import com.zxltrxn.intervaltimer.WrongInputTimeException
 import com.zxltrxn.intervaltimer.services.timer.model.NotificationData
 import com.zxltrxn.intervaltimer.services.timer.model.Period
 import com.zxltrxn.intervaltimer.services.timer.model.PeriodResource
@@ -52,7 +53,8 @@ class TimerService : Service() {
     }
 
     private fun startTimer(periods: TimePeriods) {
-        val firstPeriod: Period = periods.next() ?: return
+        val firstPeriod: Period = periods.next()
+            ?: throw WrongInputTimeException("Unable to get first period while starting timer")
         serviceState = TimerState.Started(firstPeriod)
         this.periods = periods
         remainingTime = firstPeriod.time
@@ -131,7 +133,7 @@ class TimerService : Service() {
 
     private fun broadcastUpdate() {
         val state: TimerState = serviceState
-            ?: throw IllegalArgumentException("Unexpected null state in broadcastUpdate")
+            ?: throw IllegalStateException("Unexpected serviceState == null in broadcastUpdate")
         val res: PeriodResource = state.period.getPeriodResource()
         val notificationData: NotificationData = when (state) {
             is TimerState.Started -> {
