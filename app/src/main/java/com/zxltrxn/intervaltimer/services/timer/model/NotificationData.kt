@@ -5,6 +5,6 @@ import androidx.annotation.ColorInt
 data class NotificationData(
     val title: String,
     @ColorInt val titleColor: Int,
-    val message: String? = null,
+    val message: String,
     val withSound: Boolean = false
 )

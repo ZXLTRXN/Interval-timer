@@ -148,7 +148,7 @@ class TimerService : Service() {
                     title = getString(res.endedTitle),
                     titleColor = res.color,
                     message = remainingTime.secondsToTime(this),
-//                    withSound = true
+                    withSound = true
                 )
             }
             is TimerState.Paused -> NotificationData(

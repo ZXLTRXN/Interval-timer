@@ -8,11 +8,11 @@ annotation class ServiceContext
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class MessageChannel
+annotation class SilentChannel
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
-annotation class MessageNotification
+annotation class SilentNotification
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
