@@ -1,6 +1,5 @@
 package com.zxltrxn.intervaltimer.utils
 
-import android.content.Context
 import android.content.Intent
 import android.os.Parcelable
 import androidx.core.content.ContextCompat

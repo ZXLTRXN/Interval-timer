@@ -24,8 +24,8 @@ data class TimePeriods(
         }
 
     init {
-        if (workTime == 0 || restTime == 0 || cycles == 0) {
-            throw WrongInputTimeException("Work or rest time, or cycles can't be 0")
+        if (workTime <= 0 || restTime <= 0 || cycles <= 0) {
+            throw WrongInputTimeException("Work or rest time, or cycles should be greater than 0")
         }
     }
 
