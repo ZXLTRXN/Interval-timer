@@ -7,15 +7,15 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class RxTimer @Inject constructor() {
+class RxTimer @Inject constructor() : Timer {
     private var timer: Disposable? = null
 
-    fun start(
+    override fun start(
         timeInSeconds: Long,
-        withDelay: Long = 0L,
+        withDelay: Long,
         onTick: () -> Unit,
         onComplete: () -> Unit,
-        afterDelay: () -> Unit = { }
+        afterDelay: () -> Unit
     ) {
         stop()
         timer = Observable.just(Unit)
@@ -31,7 +31,7 @@ class RxTimer @Inject constructor() {
             }.subscribe()
     }
 
-    fun stop() {
+    override fun stop() {
         timer?.dispose()
     }
 

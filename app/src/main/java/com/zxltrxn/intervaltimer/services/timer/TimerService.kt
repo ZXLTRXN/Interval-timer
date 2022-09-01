@@ -26,7 +26,7 @@ class TimerService : Service() {
     lateinit var helper: NotificationHelper
 
     @Inject
-    lateinit var timer: RxTimer
+    lateinit var timer: Timer
 
     private var serviceState: TimerState? = null
     private lateinit var periods: TimePeriods
