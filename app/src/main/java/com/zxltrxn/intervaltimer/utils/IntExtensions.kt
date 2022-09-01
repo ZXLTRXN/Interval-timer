@@ -8,11 +8,16 @@ fun Int.secondsToTime(context: Context): String {
     val tmp: Int = this % 3600
     val minutes: Int = tmp / 60
     val seconds: Int = tmp % 60
-    val padTo2: (Int) -> String = { it.toString().padStart(2, '0') }
+
     return context.getString(
         R.string.time_representation,
-        padTo2(hours),
-        padTo2(minutes),
-        padTo2(seconds)
+        hours.padTo2DigitsString(),
+        minutes.padTo2DigitsString(),
+        seconds.padTo2DigitsString()
     )
+}
+
+fun Int.padTo2DigitsString(): String {
+    if (this !in 0..99) throw IllegalArgumentException("Only 0..99 available for this representation")
+    return this.toString().padStart(2, '0')
 }

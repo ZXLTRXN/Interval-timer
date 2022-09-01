@@ -2,6 +2,7 @@
     <string name="app_name">Interval Timer</string>
 
     <string name="time_representation">%1$s:%2$s:%3$s</string>
+    <string name="time_divider">:</string>
 
 <!--notifications-->
     <string name="preparation_running_title">Preparation\'s running!</string>

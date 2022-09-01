@@ -1,6 +1,6 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.IntervalTimer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
@@ -11,4 +11,14 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="AppTheme.PickerDivider.TextAppearance" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">25sp</item>
+    </style>
+
+    <style name="AppTheme.PickerDivider" >
+        <item name="android:layout_weight">25</item>
+        <item name="android:text">@string/time_divider</item>
+    </style>
+
 </resources>

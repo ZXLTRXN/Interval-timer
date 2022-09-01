@@ -1,5 +1,6 @@
 package com.zxltrxn.intervaltimer.presentation
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -8,10 +9,8 @@ import com.zxltrxn.intervaltimer.R
 import com.zxltrxn.intervaltimer.databinding.TimerFragmentBinding
 import com.zxltrxn.intervaltimer.services.timer.TimerBroadcastReceiver
 import com.zxltrxn.intervaltimer.services.timer.TimerBroadcastReceiverImpl
-import com.zxltrxn.intervaltimer.services.timer.model.TimePeriods
-import com.zxltrxn.intervaltimer.services.timer.model.TimerCommand
-import com.zxltrxn.intervaltimer.utils.secondsToTime
-import com.zxltrxn.intervaltimer.utils.sendCommandToTimer
+import com.zxltrxn.intervaltimer.utils.initialize
+import com.zxltrxn.intervaltimer.utils.padTo2DigitsString
 
 class TimerFragment : Fragment(R.layout.timer_fragment),
     TimerBroadcastReceiver by TimerBroadcastReceiverImpl() {
@@ -19,20 +18,44 @@ class TimerFragment : Fragment(R.layout.timer_fragment),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        bindReceiver(this, requireContext()) { time ->
-            binding.remainingTime.text = time.secondsToTime(requireContext())
-        }
-        bind()
+        initializeTimePicker()
+//        bind()
+//        bindReceiver(this, requireContext()) { time ->
+//            binding.remainingTime.text = time.secondsToTime(requireContext())
+//        }
     }
 
-    private fun bind() {
-        val periods = TimePeriods(0, 2, 2, 2)
-        binding.remainingTime.text = 0.secondsToTime(requireContext())
-        binding.buttonOn.setOnClickListener {
-            sendCommandToTimer(TimerCommand.Start(periods))
-        }
-        binding.buttonOff.setOnClickListener {
-            sendCommandToTimer(TimerCommand.Stop)
+    private fun initializeTimePicker() {
+        val hoursMax = 99
+        val minutesSecondsMax = 59
+        val necessaryDigits: List<String> =
+            (0..maxOf(hoursMax, minutesSecondsMax)).map { it.padTo2DigitsString() }
+        with(binding.timePicker) {
+            numPickerHours.initialize(
+                displayedValues = necessaryDigits,
+                maxValue = hoursMax
+            )
+            numPickerMinutes.initialize(
+                displayedValues = necessaryDigits,
+                maxValue = minutesSecondsMax
+            )
+            numPickerSeconds.initialize(
+                displayedValues = necessaryDigits,
+                maxValue = minutesSecondsMax
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val textSize = 120F
+                numPickerHours.textSize = textSize
+                numPickerMinutes.textSize = textSize
+                numPickerSeconds.textSize = textSize
+                numPickerHours.selectionDividerHeight = 0
+                numPickerMinutes.selectionDividerHeight = 0
+                numPickerSeconds.selectionDividerHeight = 0
+            }
         }
     }
+
+//    private fun bind() {
+//
+//    }
 }
