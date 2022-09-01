@@ -10,16 +10,17 @@ import com.zxltrxn.intervaltimer.databinding.TimerFragmentBinding
 import com.zxltrxn.intervaltimer.services.timer.TimerBroadcastReceiver
 import com.zxltrxn.intervaltimer.services.timer.TimerBroadcastReceiverImpl
 import com.zxltrxn.intervaltimer.utils.initialize
+import com.zxltrxn.intervaltimer.utils.initializeUI
 import com.zxltrxn.intervaltimer.utils.padTo2DigitsString
 
 class TimerFragment : Fragment(R.layout.timer_fragment),
     TimerBroadcastReceiver by TimerBroadcastReceiverImpl() {
+    private val TAG = this.javaClass.simpleName
     private val binding by viewBinding(TimerFragmentBinding::bind)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initializeTimePicker()
-//        bind()
 //        bindReceiver(this, requireContext()) { time ->
 //            binding.remainingTime.text = time.secondsToTime(requireContext())
 //        }
@@ -30,32 +31,26 @@ class TimerFragment : Fragment(R.layout.timer_fragment),
         val minutesSecondsMax = 59
         val necessaryDigits: List<String> =
             (0..maxOf(hoursMax, minutesSecondsMax)).map { it.padTo2DigitsString() }
+        val textSize = 120F
         with(binding.timePicker) {
-            numPickerHours.initialize(
-                displayedValues = necessaryDigits,
-                maxValue = hoursMax
-            )
-            numPickerMinutes.initialize(
-                displayedValues = necessaryDigits,
-                maxValue = minutesSecondsMax
-            )
-            numPickerSeconds.initialize(
-                displayedValues = necessaryDigits,
-                maxValue = minutesSecondsMax
-            )
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val textSize = 120F
-                numPickerHours.textSize = textSize
-                numPickerMinutes.textSize = textSize
-                numPickerSeconds.textSize = textSize
-                numPickerHours.selectionDividerHeight = 0
-                numPickerMinutes.selectionDividerHeight = 0
-                numPickerSeconds.selectionDividerHeight = 0
+            numPickerHours.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) initializeUI(textSize)
+                initialize(displayedValues = necessaryDigits, maxValue = hoursMax)
+                setOnValueChangedListener { _, _, newValue ->
+                }
+            }
+            numPickerMinutes.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) initializeUI(textSize)
+                initialize(displayedValues = necessaryDigits, maxValue = minutesSecondsMax)
+                setOnValueChangedListener { _, _, newValue ->
+                }
+            }
+            numPickerSeconds.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) initializeUI(textSize)
+                initialize(displayedValues = necessaryDigits, maxValue = minutesSecondsMax)
+                setOnValueChangedListener { _, _, newValue ->
+                }
             }
         }
     }
-
-//    private fun bind() {
-//
-//    }
 }
