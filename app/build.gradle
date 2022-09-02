@@ -44,6 +44,7 @@ dependencies {
     def hilt_version = "2.42"
     def rx_java_version = "3.1.5"
     def rx_android_version = "3.0.0"
+    def rx_binding_version = "0.4.0"
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
@@ -52,6 +53,7 @@ dependencies {
     // Rx
     implementation "io.reactivex.rxjava3:rxandroid:$rx_android_version"
     implementation "io.reactivex.rxjava3:rxjava:$rx_java_version"
+    implementation "com.jakewharton.rxbinding:rxbinding:$rx_binding_version"
 
     // Hilt
     implementation "com.google.dagger:hilt-android:$hilt_version"
