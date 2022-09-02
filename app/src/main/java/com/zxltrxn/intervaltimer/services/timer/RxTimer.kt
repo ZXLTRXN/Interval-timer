@@ -12,9 +12,9 @@ class RxTimer @Inject constructor() : Timer {
 
     override fun start(
         timeInSeconds: Long,
-        withDelay: Long,
         onTick: () -> Unit,
         onComplete: () -> Unit,
+        withDelay: Long,
         afterDelay: () -> Unit
     ) {
         stop()

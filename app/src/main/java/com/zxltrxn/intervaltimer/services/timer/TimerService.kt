@@ -118,9 +118,9 @@ class TimerService : Service() {
             serviceState = TimerState.Started(nextPeriod)
             timer.start(
                 timeInSeconds = remainingTime.toLong(),
-                withDelay = AFTER_PERIOD_DELAY,
                 onTick = this::onTick,
                 onComplete = this::updatePeriod,
+                withDelay = AFTER_PERIOD_DELAY,
                 afterDelay = this::broadcastUpdate
             )
         } else stopService(AFTER_PERIOD_DELAY)
