@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/timerFragment"
-        android:name="com.zxltrxn.intervaltimer.presentation.TimerFragment"
-        tools:layout="@layout/timer_fragment"
+        android:name="com.zxltrxn.intervaltimer.presentation.PickTimeFragment"
+        tools:layout="@layout/pick_time_fragment"
         android:label="TimerFragment" />
 </navigation>
