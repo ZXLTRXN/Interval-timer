@@ -5,9 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import com.zxltrxn.intervaltimer.utils.NumberPickerExtensionsKt;
-
 import java.util.Objects;
-
 import javax.inject.Inject;
 
 class TimePicker {
