@@ -12,4 +12,5 @@
     <string name="work_ended_title">Work ended</string>
     <string name="rest_ended_title">Rest ended</string>
     <string name="get_back">Hey you! Get back! :]</string>
+    <string name="start_timer">Go</string>
 </resources>
